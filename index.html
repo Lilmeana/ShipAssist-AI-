@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title> ShipAssist AI | Logistics Command Center</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -352,9 +352,13 @@
         }
 
         @media (max-width: 768px) {
-            body { align-items: stretch; }
+            body { 
+                align-items: stretch; 
+                overflow: hidden; /* Prevent body bounce on iOS */
+            }
             .app-container {
                 height: 100vh;
+                height: -webkit-fill-available; /* Fill mobile viewports accurately */
                 grid-template-columns: 1fr;
                 border-radius: 0;
             }
@@ -368,9 +372,50 @@
                 transition: 0.3s ease;
             }
             .sidebar.active { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-            .msg { max-width: 85%; }
-            .quick-actions { padding: 0 10px; }
-            .action-chip { font-size: 11px; }
+            
+            /* Enhanced Mobile Chat UI */
+            .main-chat {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+            }
+
+            .messages-container {
+                padding: 15px 12px;
+                flex: 1;
+                margin-bottom: 0;
+            }
+
+            .msg { 
+                max-width: 88%; 
+                font-size: 14px;
+                padding: 8px 12px;
+            }
+
+            /* Fixed Mobile Input Bar */
+            .input-area {
+                padding: 12px;
+                background: var(--panel-header);
+                border-top: 1px solid rgba(255,255,255,0.05);
+                position: relative; /* Ensure it stays in the flow but flex container holds it */
+                padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* Support for home bars */
+            }
+
+            .input-wrapper {
+                padding: 10px 14px;
+            }
+
+            .quick-actions { 
+                padding: 8px; 
+                gap: 6px;
+            }
+
+            .action-chip { 
+                font-size: 11px; 
+                padding: 5px 10px;
+            }
+
             .mobile-overlay {
                 display: none;
                 position: fixed;
@@ -382,6 +427,18 @@
                 z-index: 999;
             }
             .mobile-overlay.active { display: block; }
+            
+            #scrollBtn {
+                right: 15px;
+                bottom: 85px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .msg { max-width: 92%; }
+            .chat-header { padding: 8px 12px; }
+            .action-btn { font-size: 18px; }
+            .input-wrapper input { font-size: 14px; }
         }
         /* --- ADDITION: MOBILE RESPONSIVENESS END --- */
     </style>
@@ -393,7 +450,7 @@
 <div class="app-container">
     <div class="sidebar" id="sidebar">
         <div class="header-ui">
-            <div class="profile-pic" onclick="toggleSidebar()"><i class="fas fa-arrow-left mobile-only"></i><i class="fas fa-user desktop-only"></i></div>
+            <div class="profile-pic" onclick="toggleSidebar()"><i class="fas fa-arrow-left"></i></div>
             <div style="display: flex; gap: 20px;">
                 <i class="fas fa-circle-notch action-btn" style="font-size: 18px;"></i>
                 <i class="fas fa-comment-alt action-btn" style="font-size: 18px;"></i>
@@ -446,23 +503,25 @@
             </div>
         </div>
 
-        <div class="quick-actions" id="quickActions">
-            <div class="action-chip" onclick="handleQuickAction('Track Package')">📦 Track Package</div>
-            <div class="action-chip" onclick="handleQuickAction('Delivery Issue')">⚠️ Delivery Issue</div>
-            <div class="action-chip" onclick="handleQuickAction('Talk to Agent')">📞 Talk to Agent</div>
-        </div>
-
-        <div id="scrollBtn" onclick="scrollToBottom()"><i class="fas fa-chevron-down"></i></div>
-
-        <div id="typingArea" class="typing-indicator" style="padding-left: 20px;"></div>
-
-        <div class="input-area">
-            <i class="far fa-smile action-btn"></i>
-            <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
+        <div id="bottomStickyWrapper">
+            <div class="quick-actions" id="quickActions">
+                <div class="action-chip" onclick="handleQuickAction('Track Package')">📦 Track Package</div>
+                <div class="action-chip" onclick="handleQuickAction('Delivery Issue')">⚠️ Delivery Issue</div>
+                <div class="action-chip" onclick="handleQuickAction('Talk to Agent')">📞 Talk to Agent</div>
             </div>
-            <i class="fas fa-paper-plane action-btn" id="sendBtn" style="font-size: 18px; color: var(--accent);"></i>
+
+            <div id="typingArea" class="typing-indicator" style="padding-left: 20px;"></div>
+
+            <div class="input-area">
+                <i class="far fa-smile action-btn"></i>
+                <div class="input-wrapper">
+                    <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
+                </div>
+                <i class="fas fa-paper-plane action-btn" id="sendBtn" style="font-size: 18px; color: var(--accent);"></i>
+            </div>
         </div>
+        
+        <div id="scrollBtn" onclick="scrollToBottom()"><i class="fas fa-chevron-down"></i></div>
     </div>
 
     <div class="dashboard">
@@ -550,7 +609,7 @@
     const INTENTS = {
         TRACKING: /(track|where|status|check|trak|parc|pacel|pakage|order|shpmnt|find)/i,
         MISSING: /(not receive|didn't get|no get|missing|never came|no show|stolen|lost|havent seen)/i,
-        DELAY: /(late|delay|long|taking|slow|wait|since|time|days|yesterday)/i, // ADDED: yesterday
+        DELAY: /(late|delay|long|taking|slow|wait|since|time|days|yesterday)/i, 
         COMPLAINT: /(bad|stupid|worst|annoying|frustrating|angry|nonsense|useless|rubbish|problem|issue|complain)/i,
         CONTACT: /(agent|human|talk|call|number|whatsapp|person|speak|support|help)/i,
         ADDRESS: /(change|wrong|address|location|destination|redirect)/i,
@@ -571,6 +630,11 @@
         sidebar.classList.toggle('active');
         overlay.classList.toggle('active');
     }
+
+    /* --- ADDITION: AUTO-SCROLL ON FOCUS --- */
+    userInput.addEventListener('focus', () => {
+        setTimeout(() => scrollToBottom(true), 300);
+    });
 
     function handleQuickAction(action) {
         userInput.value = action;
@@ -639,7 +703,6 @@
             return { text: "You're very welcome! It was a pleasure assisting you. Is there anything else you need before I go?", escalate: false };
         }
 
-        /* --- ADDITION: CUSTOM MESSAGE HANDLING (LOGISTICS SUPPORT) START --- */
         const delayPhrases = ["yesterday", "haven't seen", "not come", "supposed to come"];
         if (delayPhrases.some(phrase => query.includes(phrase)) || INTENTS.DELAY.test(query)) {
             return {
@@ -647,7 +710,6 @@
                 escalate: false
             };
         }
-        /* --- ADDITION: CUSTOM MESSAGE HANDLING END --- */
         
         if (INTENTS.MADINA.test(query)) {
             return { 
