@@ -25,14 +25,27 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
         body {
-            background-color: #0c1317;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: var(--text-primary);
-            overflow: hidden;
-        }
+    background-color: #0c1317;
+    height: 100vh;
+    height: 100dvh; /* FIX: Adjusts height when mobile keyboard/URL bars appear */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-primary);
+    overflow: hidden;
+}
+
+.main-chat {
+    display: flex;
+    flex-direction: column;
+    background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+    background-blend-mode: overlay;
+    background-color: var(--bg-chat);
+    height: 100%; 
+    overflow: hidden; 
+    position: relative;
+    min-height: 0; /* FIX: Prevents the chat from pushing the input bar off screen */
+}
 
         .app-container {
             width: 100%;
