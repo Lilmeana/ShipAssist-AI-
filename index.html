@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> ShipAssist AI | Logistics Support</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ShipAssist AI | Support</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -20,74 +20,105 @@
             --danger: #f15c5c;
         }
 
-        /* RESET & BASE */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; }
 
-        html, body {
+        /* FIX 1: Body is no longer locked; height is dynamic using dvh for mobile keyboards */
+        body, html {
             height: 100%;
-            overflow: hidden;
+            height: 100dvh;
+            width: 100%;
             background-color: var(--bg-main);
             color: var(--text-primary);
+            overflow: hidden; /* Only the container scrolls */
+            display: flex;
+            justify-content: center;
         }
 
-        /* MAIN APP LAYOUT (NO SIDEBARS/ANALYTICS) */
+        /* FIX 3: Fully optimized height handling */
         .app-container {
-            display: flex;
-            flex-direction: column;
             width: 100%;
-            height: 100vh;
             max-width: 1000px;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        .main-chat {
-            flex: 1;
+            height: 100%;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-blend-mode: overlay;
-            background-color: var(--bg-chat);
+            position: relative;
+            background: var(--bg-main);
         }
 
-        /* CHAT HEADER */
+        /* Header */
         .chat-header {
             height: 60px;
             background: var(--panel-header);
             padding: 10px 16px;
+            /* FIX 4: Safe area handling for notched phones */
+            padding-top: calc(10px + env(safe-area-inset-top));
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             flex-shrink: 0;
-            z-index: 10;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
-        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #00a884; display: flex; align-items: center; justify-content: center; }
+        .profile-pic { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            background: var(--accent); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white;
+            font-size: 18px;
+        }
 
-        /* MESSAGES AREA */
+        .header-info { flex: 1; min-width: 0; }
+        .header-info .name-row { display: flex; align-items: center; gap: 8px; }
+        .header-info .name { font-weight: 500; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .header-info .status { font-size: 12px; color: var(--text-secondary); }
+
+        .mode-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .mode-ai { background: var(--accent); color: white; }
+        .mode-human { background: #eab308; color: #000; }
+
+        /* Chat Window */
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-blend-mode: overlay;
+            background-color: var(--bg-chat);
+            overflow: hidden;
+            position: relative;
+        }
+
         .messages-container {
             flex: 1;
+            padding: 20px 15px;
             overflow-y: auto;
-            padding: 20px 5%;
             display: flex;
             flex-direction: column;
             gap: 4px;
-            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* MESSAGE STYLES */
         .msg {
-            max-width: 75%;
-            padding: 10px 14px;
+            max-width: 85%;
+            padding: 8px 12px;
             border-radius: 8px;
             font-size: 14.5px;
-            position: relative;
-            margin-bottom: 2px;
-            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
-            animation: fadeIn 0.3s ease;
             line-height: 1.5;
+            position: relative;
+            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+            animation: fadeIn 0.2s ease;
             word-wrap: break-word;
         }
 
@@ -103,98 +134,149 @@
             color: var(--text-secondary);
             font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 1px;
             padding: 5px 15px;
             border-radius: 4px;
-            margin: 15px 0;
+            margin: 12px 0;
             text-align: center;
+            max-width: 90%;
         }
 
-        .msg-time { font-size: 10px; color: rgba(255,255,255,0.4); float: right; margin-top: 5px; margin-left: 10px; }
-        .ticks { color: #53bdeb; margin-left: 4px; }
+        .msg-time {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            float: right;
+            margin-top: 4px;
+            margin-left: 8px;
+        }
 
-        /* QUICK ACTIONS & INPUT */
-        .quick-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 5%; }
-        .action-chip {
+        .ticks { color: #53bdeb; margin-left: 3px; }
+
+        /* Interaction Elements */
+        .bottom-container {
             background: var(--panel-header);
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            padding: 10px 15px;
+            overflow-x: auto;
+            white-space: nowrap;
+            background: transparent;
+        }
+
+        .quick-actions::-webkit-scrollbar { display: none; }
+
+        .action-chip {
+            background: var(--bg-side);
             border: 1px solid var(--accent);
             color: var(--accent);
             padding: 6px 14px;
-            border-radius: 18px;
+            border-radius: 20px;
             font-size: 13px;
             cursor: pointer;
             transition: 0.2s;
+            flex-shrink: 0;
         }
-        .action-chip:hover { background: var(--accent); color: white; }
 
+        .action-chip:active { background: var(--accent); color: white; }
+
+        .typing-indicator {
+            font-size: 13px;
+            color: var(--accent);
+            font-style: italic;
+            padding: 0 20px 5px;
+            height: 20px;
+        }
+
+        /* FIX 2 & 4: Input Area with Mobile Keyboard and Safe Area padding */
         .input-area {
-            background: var(--panel-header);
             padding: 10px 16px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            gap: 12px;
         }
 
-        .input-wrapper { flex: 1; background: #2a3942; border-radius: 8px; padding: 9px 12px; }
-        .input-wrapper input { width: 100%; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
+        .input-wrapper {
+            flex: 1;
+            background: #2a3942;
+            border-radius: 24px;
+            padding: 8px 16px;
+        }
 
-        .action-btn { color: var(--text-secondary); font-size: 22px; cursor: pointer; }
-        .typing-indicator { font-size: 13px; color: var(--accent); font-style: italic; height: 20px; margin: 0 5% 5px 5%; }
+        .input-wrapper input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            outline: none;
+            font-size: 16px; /* 16px prevents iOS auto-zoom on input */
+        }
 
-        /* SCROLL BUTTON */
+        .icon-btn { color: var(--text-secondary); font-size: 20px; cursor: pointer; }
+
+        .rating-container {
+            background: var(--panel-header);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--accent);
+            margin: 8px 0;
+        }
+        .star-rating { color: #eab308; font-size: 20px; display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+
         #scrollBtn {
             position: absolute;
-            bottom: 85px;
+            bottom: 140px;
             right: 20px;
             background: var(--panel-header);
             color: var(--accent);
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             display: none;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            z-index: 90;
         }
 
-        .mode-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 8px; }
-        .mode-ai { background: var(--accent); color: white; }
-        .mode-human { background: #eab308; color: #000; }
         .hidden { display: none !important; }
 
-        /* SCROLLBAR */
-        .messages-container::-webkit-scrollbar { width: 6px; }
-        .messages-container::-webkit-scrollbar-thumb { background: #374045; border-radius: 10px; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
 
-        @media (max-width: 768px) {
-            .app-container { max-width: 100%; }
-            .msg { max-width: 90%; }
+        @media (min-width: 769px) {
+            .msg { max-width: 70%; }
+            .action-chip:hover { background: var(--accent); color: white; }
         }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="main-chat">
-        <div class="chat-header">
-            <div class="profile-pic"><i class="fas fa-robot"></i></div>
-            <div style="flex:1">
-                <div style="display: flex; align-items: center;">
-                    <span style="font-weight: 500;">ShipAssist AI Support</span>
-                    <span id="modeBadge" class="mode-badge mode-ai">AI ACTIVE</span>
-                </div>
-                <div id="connectionStatus" style="font-size: 12px; color: var(--text-secondary);">online</div>
+    <header class="chat-header">
+        <div class="profile-pic"><i class="fas fa-robot" id="headerIcon"></i></div>
+        <div class="header-info">
+            <div class="name-row">
+                <span class="name">ShipAssist Support</span>
+                <span id="modeBadge" class="mode-badge mode-ai">AI Active</span>
             </div>
-            <div style="display: flex; gap: 15px;">
-                <i class="fas fa-phone action-btn" style="font-size: 18px;"></i>
-                <i class="fas fa-ellipsis-v action-btn" style="font-size: 18px;"></i>
-            </div>
+            <div id="connectionStatus" class="status">online</div>
         </div>
+        <div style="display: flex; gap: 18px;">
+            <i class="fas fa-phone icon-btn" style="font-size: 17px;"></i>
+            <i class="fas fa-ellipsis-v icon-btn" style="font-size: 17px;"></i>
+        </div>
+    </header>
 
+    <main class="main-chat">
         <div class="messages-container" id="chatContainer">
-            <div class="msg system">Encryption enabled. Your conversation is secure.</div>
+            <div class="msg system">End-to-end encrypted</div>
             <div class="msg received">
                 👋 Welcome to ShipAssist AI Support.<br><br>
                 I can help you track your package, resolve delivery issues, or connect you to an agent. How can I assist you today?
@@ -202,7 +284,9 @@
             </div>
         </div>
 
-        <div id="bottomStickyWrapper">
+        <div id="scrollBtn" onclick="scrollToBottom()"><i class="fas fa-chevron-down"></i></div>
+
+        <div class="bottom-container">
             <div class="quick-actions" id="quickActions">
                 <div class="action-chip" onclick="handleQuickAction('Track Package')">📦 Track Package</div>
                 <div class="action-chip" onclick="handleQuickAction('Delivery Issue')">⚠️ Delivery Issue</div>
@@ -212,16 +296,14 @@
             <div id="typingArea" class="typing-indicator"></div>
 
             <div class="input-area">
-                <i class="far fa-smile action-btn"></i>
+                <i class="far fa-smile icon-btn"></i>
                 <div class="input-wrapper">
                     <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
                 </div>
-                <i class="fas fa-paper-plane action-btn" id="sendBtn" style="color: var(--accent);"></i>
+                <i class="fas fa-paper-plane icon-btn" id="sendBtn" style="color: var(--accent);"></i>
             </div>
         </div>
-        
-        <div id="scrollBtn" onclick="scrollToBottom()"><i class="fas fa-chevron-down"></i></div>
-    </div>
+    </main>
 </div>
 
 <script>
@@ -231,36 +313,40 @@
     const typingArea = document.getElementById('typingArea');
     const modeBadge = document.getElementById('modeBadge');
     const connectionStatus = document.getElementById('connectionStatus');
-    const scrollBtn = document.getElementById('scrollBtn');
     const quickActions = document.getElementById('quickActions');
+    const scrollBtn = document.getElementById('scrollBtn');
+    const headerIcon = document.getElementById('headerIcon');
 
-    // DATA & RECOVERED HUMAN BEHAVIOR LOGIC
     const agentName = "Sarah";
     const db = {
-        "SPX123456": { status: "Arrived at Station", loc: "Madina Branch, Ghana", note: "Please come with your ID." },
-        "SPD987654": { status: "In Transit", loc: "Enroute to Kumasi Hub", note: "Vehicle departed Accra." },
-        "SPXWH233": { status: "At Warehouse", loc: "ACCRA DC", note: "Processing for departure." }
+        "SPX123456": { status: "Arrived at Station", loc: "Madina Branch, Ghana", eta: "Ready for Pickup", note: "Please come with ID." },
+        "SPD987654": { status: "In Transit", loc: "Enroute to Kumasi", eta: "April 02, 2026", note: "Vehicle departed Accra." }
     };
 
-    let state = { isHumanMode: false, agentIntroduced: false };
-
-    const INTENTS = {
-        TRACKING: /(track|where|status|check|order)/i,
-        CONTACT: /(agent|human|talk|speak|person)/i,
-        THANKS: /(thank|thx|grateful)/i
+    let state = {
+        isHumanMode: false,
+        agentIntroduced: false,
+        currentIntent: 'IDLE'
     };
 
-    // INPUT HANDLING
-    userInput.focus();
+    // FIX 2: Better Keyboard handling - Scroll to bottom when input focused
+    userInput.addEventListener('focus', () => {
+        setTimeout(scrollToBottom, 300);
+    });
+
+    window.onload = () => userInput.focus();
+
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && userInput.value.trim() !== '') {
             handleUserMessage(userInput.value.trim());
+            userInput.value = '';
         }
     });
 
     sendBtn.onclick = () => {
         if (userInput.value.trim() !== '') {
             handleUserMessage(userInput.value.trim());
+            userInput.value = '';
         }
     };
 
@@ -270,57 +356,66 @@
 
     function handleUserMessage(text) {
         appendMessage(text, 'sent');
-        userInput.value = '';
         quickActions.classList.add('hidden');
         
         if (state.isHumanMode) {
             simulateAgentResponse();
-        } else {
-            processAI(text);
+            return;
         }
+        processAI(text);
     }
 
     async function processAI(text) {
         typingArea.innerText = "ShipAssist AI is thinking...";
-        await new Promise(r => setTimeout(r, 1200));
+        await new Promise(r => setTimeout(r, 1000));
         typingArea.innerText = "";
         
         const response = generateAIResponse(text);
         appendMessage(response.text, 'received');
         
-        if (response.escalate) triggerEscalation();
-        else quickActions.classList.remove('hidden');
+        if (response.escalate) {
+            triggerEscalation();
+        } else {
+            quickActions.classList.remove('hidden');
+        }
     }
 
     function generateAIResponse(input) {
         const query = input.toLowerCase();
         
-        // Handle Thanks
-        if (INTENTS.THANKS.test(query)) return { text: "You're very welcome! Let me know if you need anything else.", escalate: false };
-        
-        // Tracking ID Regex (Human-like behavior from file 1)
-        const trackMatch = input.match(/\b(SPX|SPD)[A-Z0-9]+\b/i); 
-        if (trackMatch) {
-            const data = db[trackMatch[0].toUpperCase()];
-            return { 
-                text: data ? `📦 **Found:** ${data.status}\nLocation: ${data.loc}\n${data.note}` : "🔍 I couldn't find that tracking number in our system. Please double-check the code.", 
-                escalate: false 
-            };
+        if (query.includes('thank')) {
+            setTimeout(() => showRatingSystem(), 1500);
+            return { text: "You're welcome! Anything else?", escalate: false };
         }
 
-        if (INTENTS.CONTACT.test(query)) return { text: "Connecting you to an agent...", escalate: true };
-        if (INTENTS.TRACKING.test(query)) return { text: "Please provide your tracking number (it usually starts with SPX or SPD).", escalate: false };
+        const trackMatch = input.match(/\b(SPX|SPD)[A-Z0-9]+\b/i);
+        if (trackMatch) {
+            const data = db[trackMatch[0].toUpperCase()];
+            if (data) return { text: `📦 **Status: ${data.status}**\nLoc: ${data.loc}\nETA: ${data.eta}\nNote: ${data.note}`, escalate: false };
+            return { text: "🔍 Tracking number not found in database.", escalate: false };
+        }
 
-        return { text: "I can help you track parcels or connect you to a live agent. What would you like to do?", escalate: false };
+        if (query.includes('track') || query.includes('where')) {
+            return { text: "📦 Please provide your tracking number (e.g. SPX123456).", escalate: false };
+        }
+
+        if (query.includes('agent') || query.includes('talk') || query.includes('human') || query.includes('issue')) {
+            return { text: "I'll connect you to a support agent right away.", escalate: true };
+        }
+
+        return { text: "How can I help you today? I can track parcels or connect you to an agent.", escalate: false };
     }
 
     function triggerEscalation() {
+        if (state.isHumanMode) return;
         state.isHumanMode = true;
+        
         setTimeout(() => {
-            appendMessage(`--- System: Agent '${agentName}' Connected ---`, 'system');
-            modeBadge.innerText = "HUMAN AGENT";
+            appendMessage(`--- Agent '${agentName}' Connected ---`, 'system');
+            modeBadge.innerText = "Human Agent";
             modeBadge.className = "mode-badge mode-human";
-            connectionStatus.innerText = `Agent online`;
+            headerIcon.className = "fas fa-user-headset";
+            connectionStatus.innerText = `${agentName} is online`;
             simulateAgentResponse();
         }, 1500);
     }
@@ -328,19 +423,21 @@
     async function simulateAgentResponse() {
         if (state.agentIntroduced) return;
         typingArea.innerText = `${agentName} is typing...`;
-        await new Promise(r => setTimeout(r, 1800));
+        await new Promise(r => setTimeout(r, 2000));
         typingArea.innerText = "";
-        appendMessage(`Hi, I'm ${agentName}. I've just joined the chat. How can I help you today?`, 'received agent');
+        appendMessage(`Hi, I'm ${agentName}. I've reviewed your request. How can I help?`, 'received agent');
         state.agentIntroduced = true;
     }
 
-    // UI UTILS
     function appendMessage(text, type) {
         const now = new Date();
         const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
         const msgDiv = document.createElement('div');
         msgDiv.className = `msg ${type}`;
-        msgDiv.innerHTML = `${text.replace(/\n/g, '<br>')}<div class="msg-time">${time} ${type === 'sent' ? '<span class="ticks">✓✓</span>' : ''}</div>`;
+        
+        const cleanText = type.includes('sent') ? text.replace(/</g, "&lt;") : text.replace(/\n/g, '<br>');
+        msgDiv.innerHTML = `${cleanText}<div class="msg-time">${time} ${type === 'sent' ? '<span class="ticks">✓✓</span>' : ''}</div>`;
+        
         chatContainer.appendChild(msgDiv);
         scrollToBottom();
     }
@@ -350,9 +447,28 @@
     }
 
     chatContainer.onscroll = () => {
-        const showBtn = chatContainer.scrollTop < (chatContainer.scrollHeight - chatContainer.offsetHeight - 100);
-        scrollBtn.style.display = showBtn ? "flex" : "none";
+        const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 100;
+        scrollBtn.style.display = isNearBottom ? "none" : "flex";
     };
+
+    function showRatingSystem() {
+        if (document.getElementById('ratingBox')) return;
+        const html = `
+            <div class="msg received" id="ratingBox">
+                <div class="rating-container">
+                    <div>Rate your experience</div>
+                    <div class="star-rating">
+                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
+                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
+                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
+                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
+                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
+                    </div>
+                </div>
+            </div>`;
+        chatContainer.insertAdjacentHTML('beforeend', html);
+        scrollToBottom();
+    }
 </script>
 </body>
 </html>
