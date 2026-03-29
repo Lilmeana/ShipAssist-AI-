@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ShipAssist AI | Support</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title> ShipAssist AI | Logistics Command Center</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --bg-main: #0b141a;
+            --bg-side: #111b21;
             --bg-chat: #0b141a;
             --panel-header: #202c33;
             --text-primary: #e9edef;
@@ -18,110 +19,126 @@
             --agent-bubble: #374151;
             --system-msg: rgba(255, 255, 255, 0.05);
             --danger: #f15c5c;
+            --glass: rgba(255, 255, 255, 0.03);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-        body, html {
-            height: 100%;
-            height: 100dvh;
-            width: 100%;
-            background-color: var(--bg-main);
-            color: var(--text-primary);
-            overflow: hidden;
+        body {
+            background-color: #0c1317;
+            height: 100vh;
             display: flex;
             justify-content: center;
+            align-items: center;
+            color: var(--text-primary);
+            overflow: hidden;
         }
 
         .app-container {
             width: 100%;
-            max-width: 1000px;
-            height: 100%;
-            height: 100dvh;
+            max-width: 1200px;
+            height: 95vh;
+            display: grid;
+            grid-template-columns: 350px 1fr; /* Removed Analytics Column */
+            background: var(--bg-main);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Sidebar - Chat List */
+        .sidebar {
+            background: var(--bg-side);
+            border-right: 1px solid rgba(255,255,255,0.1);
             display: flex;
             flex-direction: column;
+        }
+
+        .header-ui {
+            height: 60px;
+            background: var(--panel-header);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #4f5e67; display: flex; align-items: center; justify-content: center; }
+
+        /* Search Bar Removed */
+
+        .chat-list { overflow-y: auto; flex: 1; }
+        .chat-item {
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .chat-item:hover, .chat-item.active { background: var(--panel-header); }
+        .chat-info { flex: 1; min-width: 0; }
+        .chat-info .top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .chat-info .name { font-weight: 500; font-size: 16px; }
+        .chat-info .time { font-size: 12px; color: var(--text-secondary); }
+        .chat-info .last-msg { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Main Chat Area */
+        .main-chat {
+            display: flex;
+            flex-direction: column;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-blend-mode: overlay;
+            background-color: var(--bg-chat);
+            height: 100%; 
+            overflow: hidden; 
             position: relative;
-            background: var(--bg-main);
         }
 
         .chat-header {
             height: 60px;
             background: var(--panel-header);
             padding: 10px 16px;
-            padding-top: calc(10px + env(safe-area-inset-top));
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
+            z-index: 10;
             flex-shrink: 0;
-            z-index: 100;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-
-        .profile-pic { 
-            width: 40px; 
-            height: 40px; 
-            border-radius: 50%; 
-            background: var(--accent); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: white;
-            font-size: 18px;
-        }
-
-        .header-info { flex: 1; min-width: 0; }
-        .header-info .name-row { display: flex; align-items: center; gap: 8px; }
-        .header-info .name { font-weight: 500; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .header-info .status { font-size: 12px; color: var(--text-secondary); }
-
-        .mode-badge {
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .mode-ai { background: var(--accent); color: white; }
-        .mode-human { background: #eab308; color: #000; }
-
-        .main-chat {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-blend-mode: overlay;
-            background-color: var(--bg-chat);
-            overflow: hidden;
-            position: relative;
         }
 
         .messages-container {
             flex: 1;
-            padding: 20px 15px;
+            padding: 20px 5%;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 4px;
-            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
         }
 
         .msg {
-            max-width: 85%;
-            padding: 8px 12px;
+            max-width: 75%;
+            padding: 10px 14px;
             border-radius: 8px;
             font-size: 14.5px;
-            line-height: 1.5;
             position: relative;
+            margin-bottom: 2px;
             box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
-            animation: fadeIn 0.2s ease;
-            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+            line-height: 1.5;
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .msg.sent { align-self: flex-end; background: var(--bubble-out); border-top-right-radius: 0; }
         .msg.received { align-self: flex-start; background: var(--bubble-in); border-top-left-radius: 0; }
-        .msg.agent { background: var(--agent-bubble) !important; border-left: 4px solid #eab308 !important; color: #ffffff; }
+
+        .msg.agent {
+            background: var(--agent-bubble) !important;
+            border-left: 4px solid #eab308 !important;
+            color: #ffffff;
+        }
 
         .msg.system {
             align-self: center;
@@ -129,75 +146,62 @@
             color: var(--text-secondary);
             font-size: 12px;
             text-transform: uppercase;
+            letter-spacing: 1px;
             padding: 5px 15px;
             border-radius: 4px;
-            margin: 12px 0;
-            text-align: center;
+            margin: 15px 0;
             max-width: 90%;
+            text-align: center;
         }
 
         .msg-time {
             font-size: 10px;
             color: rgba(255,255,255,0.4);
             float: right;
-            margin-top: 4px;
-            margin-left: 8px;
+            margin-top: 5px;
+            margin-left: 10px;
         }
 
-        .ticks { color: #53bdeb; margin-left: 3px; }
-
-        .bottom-container {
-            background: var(--panel-header);
-            flex-shrink: 0;
-            z-index: 100;
-        }
+        .ticks { color: #53bdeb; margin-left: 4px; }
 
         .quick-actions {
             display: flex;
             gap: 8px;
-            padding: 10px 15px;
-            overflow-x: auto;
-            white-space: nowrap;
-            background: transparent;
+            flex-wrap: wrap;
+            margin: 10px 0;
+            padding: 0 5%;
         }
-
-        .quick-actions::-webkit-scrollbar { display: none; }
 
         .action-chip {
-            background: var(--bg-side);
+            background: var(--panel-header);
             border: 1px solid var(--accent);
             color: var(--accent);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
             cursor: pointer;
-            transition: 0.2s;
-            flex-shrink: 0;
+            transition: 0.3s;
+            text-decoration: none;
         }
 
-        .action-chip:active { background: var(--accent); color: white; }
+        .action-chip:hover { background: var(--accent); color: white; }
 
-        .typing-indicator {
-            font-size: 13px;
-            color: var(--accent);
-            font-style: italic;
-            padding: 0 20px 5px;
-            height: 20px;
-        }
-
+        /* Input Area */
         .input-area {
+            background: var(--panel-header);
             padding: 10px 16px;
-            padding-bottom: calc(10px + env(safe-area-inset-bottom));
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
+            flex-shrink: 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
         }
 
         .input-wrapper {
             flex: 1;
             background: #2a3942;
-            border-radius: 24px;
-            padding: 8px 16px;
+            border-radius: 8px;
+            padding: 9px 12px;
         }
 
         .input-wrapper input {
@@ -206,70 +210,122 @@
             border: none;
             color: white;
             outline: none;
-            font-size: 16px;
+            font-size: 15px;
         }
 
-        .icon-btn { color: var(--text-secondary); font-size: 20px; cursor: pointer; }
+        .action-btn { color: var(--text-secondary); font-size: 22px; cursor: pointer; transition: 0.2s; }
+        .action-btn:hover { color: var(--text-primary); }
 
-        .rating-container {
-            background: var(--panel-header);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid var(--accent);
-            margin: 8px 0;
+        .typing-indicator {
+            font-size: 13px;
+            color: var(--accent);
+            font-style: italic;
+            height: 20px;
+            margin-bottom: 5px;
         }
-        .star-rating { color: #eab308; font-size: 20px; display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
 
         #scrollBtn {
             position: absolute;
-            bottom: 140px;
+            bottom: 80px;
             right: 20px;
             background: var(--panel-header);
             color: var(--accent);
-            width: 35px;
-            height: 35px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: none;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            z-index: 90;
+            z-index: 100;
         }
+
+        .mode-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .mode-ai { background: var(--accent); color: white; }
+        .mode-human { background: #eab308; color: #000; }
 
         .hidden { display: none !important; }
 
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
-
-        @media (min-width: 769px) {
-            .msg { max-width: 70%; }
-            .action-chip:hover { background: var(--accent); color: white; }
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 768px) {
+            .app-container { grid-template-columns: 1fr; height: 100vh; border-radius: 0; }
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                width: 85%;
+                height: 100%;
+                z-index: 1000;
+                transition: 0.3s ease;
+            }
+            .sidebar.active { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .mobile-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+            .mobile-overlay.active { display: block; }
+            .msg { max-width: 88%; }
         }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <header class="chat-header">
-        <div class="profile-pic"><i class="fas fa-robot" id="headerIcon"></i></div>
-        <div class="header-info">
-            <div class="name-row">
-                <span class="name">ShipAssist Support</span>
-                <span id="modeBadge" class="mode-badge mode-ai">AI Active</span>
-            </div>
-            <div id="connectionStatus" class="status">online</div>
-        </div>
-        <div style="display: flex; gap: 18px;">
-            <i class="fas fa-phone icon-btn" style="font-size: 17px;"></i>
-            <i class="fas fa-ellipsis-v icon-btn" style="font-size: 17px;"></i>
-        </div>
-    </header>
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
 
-    <main class="main-chat">
+<div class="app-container">
+    <div class="sidebar" id="sidebar">
+        <div class="header-ui">
+            <div class="profile-pic" onclick="toggleSidebar()"><i class="fas fa-arrow-left"></i></div>
+            <div style="display: flex; gap: 20px;">
+                <i class="fas fa-circle-notch action-btn" style="font-size: 18px;"></i>
+                <i class="fas fa-comment-alt action-btn" style="font-size: 18px;"></i>
+                <i class="fas fa-ellipsis-v action-btn" style="font-size: 18px;"></i>
+            </div>
+        </div>
+        <div class="chat-list" id="chatList">
+            <div class="chat-item active">
+                <div class="profile-pic" style="background: #00a884;"><i class="fas fa-robot"></i></div>
+                <div class="chat-info">
+                    <div class="top">
+                        <span class="name">ShipAssist AI </span>
+                        <span class="time" id="lastMsgTime">Just now</span>
+                    </div>
+                    <div class="last-msg" id="sidebarPreview">👋 Welcome to ShipAssist AI Support...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-chat">
+        <div class="chat-header">
+            <div class="profile-pic" style="background: #00a884; cursor:pointer" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+            <div style="flex:1">
+                <div style="display: flex; align-items: center;">
+                    <span style="font-weight: 500;">ShipAssist AI  Support</span>
+                    <span id="modeBadge" class="mode-badge mode-ai">AI ACTIVE</span>
+                </div>
+                <div id="connectionStatus" style="font-size: 12px; color: var(--text-secondary);">online</div>
+            </div>
+            <div style="display: flex; gap: 20px;">
+                <i class="fas fa-search action-btn" style="font-size: 18px;"></i>
+                <i class="fas fa-ellipsis-v action-btn" style="font-size: 18px;"></i>
+            </div>
+        </div>
+
         <div class="messages-container" id="chatContainer">
-            <div class="msg system">End-to-end encrypted</div>
+            <div class="msg system">Encryption enabled. Your conversation is secure.</div>
             <div class="msg received">
                 👋 Welcome to ShipAssist AI Support.<br><br>
                 I can help you track your package, resolve delivery issues, or connect you to an agent. How can I assist you today?
@@ -277,26 +333,26 @@
             </div>
         </div>
 
-        <div id="scrollBtn" onclick="scrollToBottom()"><i class="fas fa-chevron-down"></i></div>
-
-        <div class="bottom-container">
+        <div id="bottomStickyWrapper">
             <div class="quick-actions" id="quickActions">
                 <div class="action-chip" onclick="handleQuickAction('Track Package')">📦 Track Package</div>
                 <div class="action-chip" onclick="handleQuickAction('Delivery Issue')">⚠️ Delivery Issue</div>
                 <div class="action-chip" onclick="handleQuickAction('Talk to Agent')">📞 Talk to Agent</div>
             </div>
 
-            <div id="typingArea" class="typing-indicator"></div>
+            <div id="typingArea" class="typing-indicator" style="padding-left: 20px;"></div>
 
             <div class="input-area">
-                <i class="far fa-smile icon-btn"></i>
+                <i class="far fa-smile action-btn"></i>
                 <div class="input-wrapper">
                     <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
                 </div>
-                <i class="fas fa-paper-plane icon-btn" id="sendBtn" style="color: var(--accent);"></i>
+                <i class="fas fa-paper-plane action-btn" id="sendBtn" style="font-size: 18px; color: var(--accent);"></i>
             </div>
         </div>
-    </main>
+        
+        <div id="scrollBtn" onclick="scrollToBottom()"><i class="fas fa-chevron-down"></i></div>
+    </div>
 </div>
 
 <script>
@@ -306,14 +362,17 @@
     const typingArea = document.getElementById('typingArea');
     const modeBadge = document.getElementById('modeBadge');
     const connectionStatus = document.getElementById('connectionStatus');
-    const quickActions = document.getElementById('quickActions');
+    const sidebarPreview = document.getElementById('sidebarPreview');
     const scrollBtn = document.getElementById('scrollBtn');
-    const headerIcon = document.getElementById('headerIcon');
+    const quickActions = document.getElementById('quickActions');
 
     const agentName = "Sarah";
+    const contactNumber = "0557265120"; // Your number
+
     const db = {
-        "SPX123456": { status: "Arrived at Station", loc: "Madina Branch, Ghana", eta: "Ready for Pickup", note: "Please come with ID." },
-        "SPD987654": { status: "In Transit", loc: "Enroute to Kumasi", eta: "April 02, 2026", note: "Vehicle departed Accra." }
+        "SPX123456": { status: "Arrived at Station", loc: "Madina Branch, Ghana", eta: "Ready for Pickup", note: "Please come with your ID for **Self Pick-up**." },
+        "SPD987654": { status: "In Transit", loc: "Enroute to Kumasi Hub", eta: "April 02, 2026", note: "Vehicle departed Accra." },
+        "SPXWH233": { status: "At Warehouse (Ghana)", loc: "ACCRA DC, Custom bounded warehouse Accra", eta: "Yet to depart", note: "Your parcel is currently at our main warehouse." }
     };
 
     let state = {
@@ -322,11 +381,27 @@
         currentIntent: 'IDLE'
     };
 
-    userInput.addEventListener('focus', () => {
-        setTimeout(scrollToBottom, 300);
-    });
+    const INTENTS = {
+        TRACKING: /(track|where|status|check|trak|parc|pacel|pakage|order|shpmnt|find)/i,
+        MISSING: /(not receive|didn't get|no get|missing|never came|no show|stolen|lost|havent seen)/i,
+        CONTACT: /(agent|human|talk|call|number|whatsapp|person|speak|support|help)/i,
+        THANKS: /(thank|thx|obrigado|merci|grateful|done|solved)/i
+    };
 
     window.onload = () => userInput.focus();
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.getElementById('mobileOverlay').classList.toggle('active');
+    }
+
+    userInput.addEventListener('focus', () => { setTimeout(() => scrollToBottom(true), 300); });
+
+    function handleQuickAction(action) {
+        userInput.value = action;
+        handleUserMessage(action);
+        userInput.value = '';
+    }
 
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && userInput.value.trim() !== '') {
@@ -342,14 +417,10 @@
         }
     };
 
-    function handleQuickAction(action) {
-        handleUserMessage(action);
-    }
-
     function handleUserMessage(text) {
         appendMessage(text, 'sent');
         quickActions.classList.add('hidden');
-        
+
         if (state.isHumanMode) {
             simulateAgentResponse();
             return;
@@ -358,51 +429,38 @@
     }
 
     async function processAI(text) {
-        typingArea.innerText = "ShipAssist AI is thinking...";
+        typingArea.innerText = "Speedaf AI is thinking...";
         await new Promise(r => setTimeout(r, 1000));
-        typingArea.innerText = "";
         
         const response = generateAIResponse(text);
+        typingArea.innerText = "";
         appendMessage(response.text, 'received');
         
-        if (response.escalate) {
+        if (response.escalate && !state.isHumanMode) {
             triggerEscalation();
-        } else {
+        } else if (!state.isHumanMode) {
             quickActions.classList.remove('hidden');
         }
     }
 
-    // Logic updated to match requirements
     function generateAIResponse(input) {
         const query = input.toLowerCase();
-        
-        // 4. Appreciation / Polite Responses
-        if (query.includes('thank') || query.includes('thanks')) {
-            setTimeout(() => showRatingSystem(), 1500);
-            return { text: "You're welcome! ", escalate: false };
-        }
+        if (INTENTS.THANKS.test(query)) return { text: "You're welcome! Happy to help.", escalate: false };
 
-        // 1. Tracking Related Questions
-        const trackMatch = input.match(/\b(SPX|SPD)[A-Z0-9]+\b/i);
+        const trackMatch = input.match(/\b(SPX|SPD)[A-Z0-9]+\b/i); 
         if (trackMatch) {
             const data = db[trackMatch[0].toUpperCase()];
-            if (data) return { text: `📦 **Found:** Arrived at Station\nLocation: ${data.loc}\nPlease come with your ID.`, escalate: false };
-            return { text: "🔍 Tracking number not found in database.", escalate: false };
+            if (data) return { text: `📦 **Shipment Found**\n\n**Status:** ${data.status}\n**Location:** ${data.loc}\n**Note:** ${data.note}`, escalate: false };
+            return { text: "🔍 Tracking number not found in our logs.", escalate: false };
         }
 
-        if (query.includes('track') || query.includes('where') || query.includes('check my') || query.includes('order')) {
-            return { text: "📦 Please provide your tracking number (it usually starts with SPX or SPD).", escalate: false };
+        if (INTENTS.CONTACT.test(query) || INTENTS.MISSING.test(query)) {
+            return { text: "⚠️ I am transferring you to an Agent to investigate this immediately.", escalate: true };
         }
 
-        // 2 & 3. Delivery Issue / Human Agent Requests
-        if (query.includes('agent') || query.includes('talk') || query.includes('human') || 
-            query.includes('issue') || query.includes('problem') || query.includes('wrong') || 
-            query.includes('support') || query.includes('someone') || query.includes('service')) {
-            return { text: "I'll connect you to a support agent right away.", escalate: true };
-        }
+        if (INTENTS.TRACKING.test(query)) return { text: "📦 Please type your **Tracking Number** (e.g., SPX123456).", escalate: false };
 
-        // 5. General Help / Unknown Questions
-        return { text: "How can I help you today? I can track parcels or connect you to an agent.", escalate: false };
+        return { text: "I'm here to help! Would you like to **track a parcel** or **speak to an agent**? 😊", escalate: false };
     }
 
     function triggerEscalation() {
@@ -410,23 +468,31 @@
         state.isHumanMode = true;
         
         setTimeout(() => {
-            appendMessage(`--- Agent '${agentName}' Connected ---`, 'system');
-            modeBadge.innerText = "Human Agent";
+            appendMessage(`--- System: Priority Agent '${agentName}' Connected ---`, 'system');
+            modeBadge.innerText = "HUMAN AGENT";
             modeBadge.className = "mode-badge mode-human";
-            headerIcon.className = "fas fa-user-headset";
-            connectionStatus.innerText = `${agentName} is online`;
+            connectionStatus.innerText = `Agent '${agentName}' is online`;
             simulateAgentResponse();
-        }, 1500);
+        }, 1200);
     }
 
     async function simulateAgentResponse() {
-        if (state.agentIntroduced) return;
+        if (state.agentIntroduced) return; 
+
         typingArea.innerText = `${agentName} is typing...`;
         await new Promise(r => setTimeout(r, 2000));
         typingArea.innerText = "";
-        // Agent message per requirements
-        appendMessage(`Hi, I'm ${agentName}. I've reviewed your request. How can I help?`, 'received agent');
-        state.agentIntroduced = true;
+        
+        appendMessage(`Hi, I'm ${agentName}. I've been briefed. If there is no response here, please click the button below to chat with me directly.`, 'received agent');
+        state.agentIntroduced = true; 
+        
+        setTimeout(() => {
+            const waDiv = document.createElement('div');
+            waDiv.className = "quick-actions";
+            waDiv.innerHTML = `<a href="https://wa.me/233${contactNumber.substring(1)}" class="action-chip" target="_blank" style="background: #25d366; color: white; border: none;"><i class="fab fa-whatsapp"></i> Chat with an Agent</a>`;
+            chatContainer.appendChild(waDiv);
+            scrollToBottom(true);
+        }, 1000);
     }
 
     function appendMessage(text, type) {
@@ -434,40 +500,16 @@
         const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
         const msgDiv = document.createElement('div');
         msgDiv.className = `msg ${type}`;
-        
-        const cleanText = type.includes('sent') ? text.replace(/</g, "&lt;") : text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        msgDiv.innerHTML = `${cleanText}<div class="msg-time">${time} ${type === 'sent' ? '<span class="ticks">✓✓</span>' : ''}</div>`;
-        
+        msgDiv.innerHTML = `${text.replace(/\n/g, '<br>')}<div class="msg-time">${time} ${type.includes('sent') ? '<span class="ticks">✓✓</span>' : ''}</div>`;
         chatContainer.appendChild(msgDiv);
-        scrollToBottom();
+        scrollToBottom(true);
+        if (!type.includes('system')) sidebarPreview.innerText = text.substring(0, 30) + "...";
     }
 
-    function scrollToBottom() {
-        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-    }
-
-    chatContainer.onscroll = () => {
-        const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 100;
-        scrollBtn.style.display = isNearBottom ? "none" : "flex";
-    };
-
-    function showRatingSystem() {
-        if (document.getElementById('ratingBox')) return;
-        const html = `
-            <div class="msg received" id="ratingBox">
-                <div class="rating-container">
-                    <div>Rate your experience</div>
-                    <div class="star-rating">
-                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
-                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
-                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
-                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
-                        <i class="far fa-star" onclick="this.parentElement.innerHTML='Thanks for the feedback!'"></i>
-                    </div>
-                </div>
-            </div>`;
-        chatContainer.insertAdjacentHTML('beforeend', html);
-        scrollToBottom();
+    function scrollToBottom(force = false) {
+        if (force || chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 150) {
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
     }
 </script>
 </body>
