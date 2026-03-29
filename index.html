@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> ShipAssist AI | Logistics Command Center</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b141a;
+            --bg-side: #111b21;
+            --bg-chat: #0b141a;
+            --panel-header: #202c33;
+            --text-primary: #e9edef;
+            --text-secondary: #8696a0;
+            --accent: #00a884;
+            --bubble-out: #005c4b;
+            --bubble-in: #202c33;
+            --agent-bubble: #374151;
+            --system-msg: rgba(255, 255, 255, 0.05);
+            --danger: #f15c5c;
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body {
+            background-color: #0c1317;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1600px;
+            height: 95vh;
+            display: grid;
+            grid-template-columns: 350px 1fr 300px;
+            background: var(--bg-main);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Sidebar - Chat List */
+        .sidebar {
+            background: var(--bg-side);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-ui {
+            height: 60px;
+            background: var(--panel-header);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #4f5e67; display: flex; align-items: center; justify-content: center; }
+
+        .search-container {
+            padding: 8px 12px;
+            background: var(--bg-side);
+        }
+
+        .search-bar {
+            background: var(--panel-header);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: white;
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .chat-list { overflow-y: auto; flex: 1; }
+        .chat-item {
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .chat-item:hover, .chat-item.active { background: var(--panel-header); }
+        .chat-info { flex: 1; }
+        .chat-info .top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .chat-info .name { font-weight: 500; font-size: 16px; }
+        .chat-info .time { font-size: 12px; color: var(--text-secondary); }
+        .chat-info .last-msg { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+
+        /* Main Chat Area */
+        .main-chat {
+            display: flex;
+            flex-direction: column;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-blend-mode: overlay;
+            background-color: var(--bg-chat);
+            height: 100%; 
+            overflow: hidden; 
+        }
+
+        .chat-header {
+            height: 60px;
+            background: var(--panel-header);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+
+        .messages-container {
+            flex: 1;
+            padding: 20px 5%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            scroll-behavior: smooth;
+        }
+
+        .msg {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14.5px;
+            position: relative;
+            margin-bottom: 2px;
+            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+            animation: fadeIn 0.3s ease;
+            line-height: 1.5;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .msg.sent {
+            align-self: flex-end;
+            background: var(--bubble-out);
+            border-top-right-radius: 0;
+        }
+
+        .msg.received {
+            align-self: flex-start;
+            background: var(--bubble-in);
+            border-top-left-radius: 0;
+        }
+
+        .msg.agent {
+            background: var(--agent-bubble) !important;
+            border-left: 4px solid #eab308 !important;
+            color: #ffffff;
+        }
+
+        .msg.received.agent {
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+
+        .msg.system {
+            align-self: center;
+            background: var(--system-msg);
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 5px 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .msg-time {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            float: right;
+            margin-top: 5px;
+            margin-left: 10px;
+        }
+
+        .ticks { color: #53bdeb; margin-left: 4px; }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+            padding: 0 5%;
+        }
+
+        .action-chip {
+            background: var(--panel-header);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .action-chip:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Rating System Styles */
+        .rating-container {
+            background: var(--panel-header);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--accent);
+            margin: 10px 0;
+            animation: fadeIn 0.5s ease;
+        }
+        .star-rating { color: #eab308; font-size: 20px; cursor: pointer; gap: 5px; display: flex; justify-content: center; margin-top: 10px; }
+        .star-rating i:hover { transform: scale(1.2); }
+
+        /* Input Area */
+        .input-area {
+            background: var(--panel-header);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            background: #2a3942;
+            border-radius: 8px;
+            padding: 9px 12px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .action-btn {
+            color: var(--text-secondary);
+            font-size: 22px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .action-btn:hover { color: var(--text-primary); }
+
+        /* Dashboard Panel */
+        .dashboard {
+            background: var(--bg-side);
+            border-left: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .stat-card {
+            background: var(--panel-header);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-val { font-size: 24px; font-weight: bold; color: var(--accent); }
+        .stat-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+
+        .tracking-log {
+            margin-top: 20px;
+            font-size: 13px;
+        }
+
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .typing-indicator {
+            font-size: 13px;
+            color: var(--accent);
+            font-style: italic;
+            height: 20px;
+            margin-bottom: 5px;
+        }
+
+        #scrollBtn {
+            position: absolute;
+            bottom: 80px;
+            right: 320px;
+            background: var(--panel-header);
+            color: var(--accent);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+
+        .mode-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .mode-ai { background: var(--accent); color: white; }
+        .mode-human { background: #eab308; color: #000; }
+
+        .hidden { display: none !important; }
+
+        /* --- ADDITION: MOBILE RESPONSIVENESS START --- */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 280px 1fr;
+            }
+            .dashboard { display: none; }
+            #scrollBtn { right: 20px; }
+        }
+
+        @media (max-width: 768px) {
+            body { align-items: stretch; }
+            .app-container {
+                height: 100vh;
+                grid-template-columns: 1fr;
+                border-radius: 0;
+            }
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                width: 85%;
+                height: 100%;
+                z-index: 1000;
+                transition: 0.3s ease;
+            }
+            .sidebar.active { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .msg { max-width: 85%; }
+            .quick-actions { padding: 0 10px; }
+            .action-chip { font-size: 11px; }
+            .mobile-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+            .mobile-overlay.active { display: block; }
+        }
+        /* --- ADDITION: MOBILE RESPONSIVENESS END --- */
+    </style>
+</head>
+<body>
+
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+
+<div class="app-container">
+    <div class="sidebar" id="sidebar">
+        <div class="header-ui">
+            <div class="profile-pic" onclick="toggleSidebar()"><i class="fas fa-arrow-left mobile-only"></i><i class="fas fa-user desktop-only"></i></div>
+            <div style="display: flex; gap: 20px;">
+                <i class="fas fa-circle-notch action-btn" style="font-size: 18px;"></i>
+                <i class="fas fa-comment-alt action-btn" style="font-size: 18px;"></i>
+                <i class="fas fa-ellipsis-v action-btn" style="font-size: 18px;"></i>
+            </div>
+        </div>
+        <div class="search-container">
+            <div class="search-bar">
+                <i class="fas fa-search" style="color: var(--text-secondary); font-size: 14px;"></i>
+                <input type="text" placeholder="Search or start new chat">
+            </div>
+        </div>
+        <div class="chat-list" id="chatList">
+            <div class="chat-item active">
+                <div class="profile-pic" style="background: #00a884;"><i class="fas fa-robot"></i></div>
+                <div class="chat-info">
+                    <div class="top">
+                        <span class="name">ShipAssist AI </span>
+                        <span class="time" id="lastMsgTime">Just now</span>
+                    </div>
+                    <div class="last-msg" id="sidebarPreview">👋 Welcome to ShipAssist AI Support...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-chat">
+        <div class="chat-header">
+            <div class="profile-pic" style="background: #00a884; cursor:pointer" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+            <div style="flex:1">
+                <div style="display: flex; align-items: center;">
+                    <span style="font-weight: 500;">ShipAssist AI  Support</span>
+                    <span id="modeBadge" class="mode-badge mode-ai">AI ACTIVE</span>
+                </div>
+                <div id="connectionStatus" style="font-size: 12px; color: var(--text-secondary);">online</div>
+            </div>
+            <div style="display: flex; gap: 20px;" class="desktop-only">
+                <i class="fas fa-search action-btn" style="font-size: 18px;"></i>
+                <i class="fas fa-paperclip action-btn" style="font-size: 18px;"></i>
+                <i class="fas fa-ellipsis-v action-btn" style="font-size: 18px;"></i>
+            </div>
+        </div>
+
+        <div class="messages-container" id="chatContainer">
+            <div class="msg system">Encryption enabled. Your conversation is secure.</div>
+            <div class="msg received">
+                👋 Welcome to ShipAssist AI  Support.<br><br>
+                I can help you track your package, resolve delivery issues, or connect you to an agent. How can I assist you today?
+                <div class="msg-time">09:00</div>
+            </div>
+        </div>
+
+        <div class="quick-actions" id="quickActions">
+            <div class="action-chip" onclick="handleQuickAction('Track Package')">📦 Track Package</div>
+            <div class="action-chip" onclick="handleQuickAction('Delivery Issue')">⚠️ Delivery Issue</div>
+            <div class="action-chip" onclick="handleQuickAction('Talk to Agent')">📞 Talk to Agent</div>
+        </div>
+
+        <div id="scrollBtn" onclick="scrollToBottom()"><i class="fas fa-chevron-down"></i></div>
+
+        <div id="typingArea" class="typing-indicator" style="padding-left: 20px;"></div>
+
+        <div class="input-area">
+            <i class="far fa-smile action-btn"></i>
+            <div class="input-wrapper">
+                <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
+            </div>
+            <i class="fas fa-paper-plane action-btn" id="sendBtn" style="font-size: 18px; color: var(--accent);"></i>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <h3 style="margin-bottom: 20px; font-size: 18px; border-bottom: 1px solid var(--glass); padding-bottom: 10px;">Analytics</h3>
+        
+        <div class="stat-card">
+            <div class="stat-val" id="statTotal">1</div>
+            <div class="stat-label">Total Messages</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" id="statAI" style="color: var(--accent);">1</div>
+            <div class="stat-label">AI Handled</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" id="statEscalated" style="color: var(--danger);">0</div>
+            <div class="stat-label">Escalations</div>
+        </div>
+
+        <h4 style="margin: 20px 0 10px; font-size: 14px; color: var(--text-secondary);">LIVE TRACKING LOGS</h4>
+        <div class="tracking-log" id="trackingLogs">
+            <div class="log-entry"><span>SPX123456</span> <span style="color: var(--accent)">DELIVERED</span></div>
+            <div class="log-entry"><span>SPD987654</span> <span style="color: #eab308">IN TRANSIT</span></div>
+            <div class="log-entry"><span>LATE555</span> <span style="color: var(--danger)">DELAYED</span></div>
+            <div class="log-entry"><span>SPXWH233</span> <span style="color: var(--accent)">ARRIVE AT ACCRA DC</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. CONFIGURATION & DATABASE ---
+    const chatContainer = document.getElementById('chatContainer');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const typingArea = document.getElementById('typingArea');
+    const modeBadge = document.getElementById('modeBadge');
+    const connectionStatus = document.getElementById('connectionStatus');
+    const sidebarPreview = document.getElementById('sidebarPreview');
+    const statTotal = document.getElementById('statTotal');
+    const statAI = document.getElementById('statAI');
+    const statEscalated = document.getElementById('statEscalated');
+    const scrollBtn = document.getElementById('scrollBtn');
+    const quickActions = document.getElementById('quickActions');
+
+    const agentName = "Sarah";
+
+    const db = {
+        "SPX123456": { 
+            status: "Arrived at Station", 
+            loc: "Madina Branch, Ghana", 
+            eta: "Ready for Pickup", 
+            note: "Please come with your ID for **Self Pick-up**.", 
+            phone: "+233 24 123 4567" 
+        },
+        "SPD987654": { 
+            status: "In Transit", 
+            loc: "Enroute to Kumasi Hub", 
+            eta: "April 02, 2026", 
+            note: "Vehicle departed Accra.", 
+            phone: "+233 20 987 6543" 
+        },
+        "SPXWH233": { 
+            status: "At Warehouse (Ghana)", 
+            loc: "ACCRA DC, Custom bounded warehouse Accra", 
+            eta: "Yet to depart", 
+            note: "Your parcel is currently at our main warehouse. Please have patience, it will be departed to the pick up station."
+        }
+    };
+
+    // --- 2. SYSTEM STATE ---
+    let state = {
+        isHumanMode: false,
+        agentIntroduced: false, 
+        totalMsgs: 1,
+        aiMsgs: 1,
+        escalatedCount: 0,
+        currentIntent: 'IDLE',
+        context: {
+            lastTrackingAttempt: null,
+            sentimentScore: 0, 
+            userName: null
+        }
+    };
+
+    // --- 3. INTENT DETECTION ENGINE ---
+    const INTENTS = {
+        TRACKING: /(track|where|status|check|trak|parc|pacel|pakage|order|shpmnt|find)/i,
+        MISSING: /(not receive|didn't get|no get|missing|never came|no show|stolen|lost|havent seen)/i,
+        DELAY: /(late|delay|long|taking|slow|wait|since|time|days|yesterday)/i, // ADDED: yesterday
+        COMPLAINT: /(bad|stupid|worst|annoying|frustrating|angry|nonsense|useless|rubbish|problem|issue|complain)/i,
+        CONTACT: /(agent|human|talk|call|number|whatsapp|person|speak|support|help)/i,
+        ADDRESS: /(change|wrong|address|location|destination|redirect)/i,
+        FEES: /(money|pay|cost|fee|charge|customs|tax|price|expensive)/i,
+        THANKS: /(thank|thx|obrigado|merci|grateful|done|solved)/i,
+        MADINA: /\b(madina|zongo|melcom|madina branch)\b/i,
+        PIDGIN: /\b(no get|dey)\b/i
+    };
+
+    // --- 4. CORE FUNCTIONS ---
+
+    window.onload = () => userInput.focus();
+
+    // --- ADDITION: Mobile Toggle Handler ---
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+
+    function handleQuickAction(action) {
+        userInput.value = action;
+        handleUserMessage(action);
+        userInput.value = '';
+    }
+
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && userInput.value.trim() !== '') {
+            handleUserMessage(userInput.value.trim());
+            userInput.value = '';
+        }
+    });
+
+    sendBtn.onclick = () => {
+        if (userInput.value.trim() !== '') {
+            handleUserMessage(userInput.value.trim());
+            userInput.value = '';
+        }
+    };
+
+    function handleUserMessage(text) {
+        appendMessage(text, 'sent');
+        state.totalMsgs++;
+        updateStats();
+        
+        quickActions.classList.add('hidden');
+
+        if (state.isHumanMode) {
+            if (INTENTS.THANKS.test(text.toLowerCase())) {
+                setTimeout(() => showRatingSystem(), 1500);
+            }
+            simulateAgentResponse();
+            return;
+        }
+        processAI(text);
+    }
+
+    async function processAI(text) {
+        typingArea.innerText = "Speedaf AI is thinking...";
+        const delay = Math.min(Math.max(text.length * 40, 1000), 2000);
+        await new Promise(r => setTimeout(r, delay));
+        
+        const response = generateAIResponse(text);
+        typingArea.innerText = "";
+        
+        appendMessage(response.text, 'received');
+        state.aiMsgs++;
+        updateStats();
+        
+        if (response.escalate && !state.isHumanMode) {
+            triggerEscalation();
+        } else if (!state.isHumanMode) {
+            quickActions.classList.remove('hidden');
+        }
+    }
+
+    // --- 5. AI BRAIN ---
+    function generateAIResponse(input) {
+        const query = input.toLowerCase();
+        
+        if (INTENTS.COMPLAINT.test(query)) state.context.sentimentScore -= 2;
+
+        if (INTENTS.THANKS.test(query)) {
+            setTimeout(() => showRatingSystem(), 1500);
+            return { text: "You're very welcome! It was a pleasure assisting you. Is there anything else you need before I go?", escalate: false };
+        }
+
+        /* --- ADDITION: CUSTOM MESSAGE HANDLING (LOGISTICS SUPPORT) START --- */
+        const delayPhrases = ["yesterday", "haven't seen", "not come", "supposed to come"];
+        if (delayPhrases.some(phrase => query.includes(phrase)) || INTENTS.DELAY.test(query)) {
+            return {
+                text: "I am truly sorry for the delay with your parcel. 😔\n\nSometimes deliveries can be affected by unexpected transit delays, peak volumes, or routing updates at our distribution centers.\n\nRest assured, your shipment is a priority for us. **Could you please provide your tracking number (e.g., SPX123456)** so I can pull up the live status and see exactly where it is?",
+                escalate: false
+            };
+        }
+        /* --- ADDITION: CUSTOM MESSAGE HANDLING END --- */
+        
+        if (INTENTS.MADINA.test(query)) {
+            return { 
+                text: "📍 **Speedaf Madina Branch**\n\n**Location:** Madina Zongo Junction, opposite the Melcom building, Accra, Ghana.\n**Branch Number:** +233 24 123 4567\n\n**Note:** You can also find 'Speedaf Madina' on **Google Maps** for real-time directions!", 
+                escalate: false 
+            };
+        }
+
+        const trackMatch = input.match(/\b(SPX|SPD)[A-Z0-9]+\b/i); 
+        if (trackMatch) {
+            const code = trackMatch[0].toUpperCase();
+            const data = db[code];
+            
+            if (data) {
+                return { 
+                    text: `📦 **Shipment Found: ${code}**\n\n**Status:** ${data.status}\n**Location:** ${data.loc}\n**ETA:** ${data.eta}\n\n**Note:** ${data.note}`,
+                    escalate: false 
+                };
+            }
+            return { text: "🔍 I found the tracking number format, but it's not in our active database. Please double-check your receipt.", escalate: false };
+        }
+
+        if (state.currentIntent === 'WAITING_FOR_TRACKING') {
+            if (INTENTS.MISSING.test(query)) {
+                return { text: "I understand you haven't received it yet. Since I can't find a record of that specific movement, let me get an agent to investigate the warehouse logs for you.", escalate: true };
+            }
+            state.currentIntent = 'IDLE';
+        }
+
+        if (INTENTS.MISSING.test(query)) {
+            return { 
+                text: "⚠️ I am very sorry to hear your package hasn't arrived. I know how important this is.\n\nSince this is a high-priority delivery issue, I am transferring you to an Agent immediately to investigate this for you.", 
+                escalate: true 
+            };
+        }
+
+        if (INTENTS.TRACKING.test(query)) {
+            state.currentIntent = 'WAITING_FOR_TRACKING';
+            return { text: "📦 I can help you locate that. Please type your **Tracking Number** (e.g., SPX123456) below", escalate: false };
+        }
+
+        if (INTENTS.ADDRESS.test(query)) {
+            return { text: "📍 To change a delivery address, we need to verify your identity. I'll connect you to a human agent who can securely update your details.", escalate: true };
+        }
+
+        if (INTENTS.FEES.test(query)) {
+            return { text: "Customs and handling fees are calculated based on item value. For a full breakdown of any extra charges, please type **'Talk to Agent'**.", escalate: false };
+        }
+
+        if (INTENTS.CONTACT.test(query)) {
+            return { text: "Understood. I'm transferring you to our support queue now. Please stay online.", escalate: true };
+        }
+
+        if (INTENTS.PIDGIN.test(query)) {
+            return { text: "No vex! I dey here to help you. Abeg, send your tracking number make I check wetin dey happen with your parcel. 📦", escalate: false };
+        }
+
+        return { 
+            text: "I'm here to help! Would you like to **track a parcel**, report an **issue**, or **speak to an agent**? 😊", 
+            escalate: false 
+        };
+    }
+
+    function triggerEscalation() {
+        if (state.isHumanMode) return;
+        state.isHumanMode = true;
+        state.escalatedCount++;
+        
+        setTimeout(() => {
+            appendMessage(`--- System: Priority Agent '${agentName}' Connected ---`, 'system');
+            modeBadge.innerText = "HUMAN AGENT";
+            modeBadge.className = "mode-badge mode-human";
+            connectionStatus.innerText = `Agent '${agentName}' is online`;
+            updateStats();
+        }, 1200);
+    }
+
+    async function simulateAgentResponse() {
+        if (state.agentIntroduced) return; 
+
+        typingArea.innerText = `${agentName} is typing...`;
+        await new Promise(r => setTimeout(r, 2000));
+        typingArea.innerText = "";
+        
+        const introMsg = `Hi, I'm ${agentName} from the Priority Support team. How may I help you today?`;
+        appendMessage(introMsg, 'received agent');
+        state.agentIntroduced = true; 
+        
+        setTimeout(() => showHumanOptions(), 1000);
+    }
+
+    function sanitize(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function appendMessage(text, type) {
+        const now = new Date();
+        const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg ${type}`;
+        
+        const cleanText = (type.includes('sent')) ? sanitize(text) : text.replace(/\n/g, '<br>');
+        
+        msgDiv.innerHTML = `${cleanText}<div class="msg-time">${time} ${type.includes('sent') ? '<span class="ticks">✓✓</span>' : ''}</div>`;
+        
+        chatContainer.appendChild(msgDiv);
+        scrollToBottom(true); 
+        
+        if (!type.includes('system')) {
+            sidebarPreview.innerText = text.substring(0, 35) + "...";
+            document.getElementById('lastMsgTime').innerText = time;
+        }
+    }
+
+    function updateStats() {
+        statTotal.innerText = state.totalMsgs;
+        statAI.innerText = state.aiMsgs;
+        statEscalated.innerText = state.escalatedCount;
+    }
+
+    function scrollToBottom(force = false) {
+        const threshold = 150; 
+        const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < threshold;
+        
+        if (force || isNearBottom) {
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+    }
+
+    chatContainer.onscroll = () => {
+        scrollBtn.style.display = (chatContainer.scrollTop < (chatContainer.scrollHeight - chatContainer.offsetHeight - 100)) ? "flex" : "none";
+    };
+
+    function showHumanOptions() {
+        if(document.getElementById('agentOptions')) return;
+
+        const optionsHtml = `
+            <div class="quick-actions" id="agentOptions">
+                <div class="action-chip" onclick="handleAgentChoice('Parcel Delayed')">📦 Parcel Delayed</div>
+                <div class="action-chip" onclick="handleAgentChoice('Refund Request')">💰 Refund Request</div>
+                <div class="action-chip" onclick="handleAgentChoice('General Inquiry')">🙋 General Inquiry</div>
+            </div>
+        `;
+        const optionsDiv = document.createElement('div');
+        optionsDiv.innerHTML = optionsHtml;
+        chatContainer.appendChild(optionsDiv);
+        scrollToBottom(true);
+    }
+
+    function handleAgentChoice(choice) {
+        document.getElementById('agentOptions')?.remove();
+        appendMessage(choice, 'sent');
+        setTimeout(() => {
+            typingArea.innerText = `${agentName} is typing...`;
+            setTimeout(() => {
+                typingArea.innerText = "";
+                if (choice === 'Parcel Delayed') {
+                    appendMessage("I'm very sorry for the wait on your parcel. I understand how frustrating a delay can be. Let me pull up your tracking details—could you please provide your tracking number?", 'received agent');
+                } else if (choice === 'Refund Request') {
+                    appendMessage("I can certainly help you with a refund inquiry. To get started, is this for a shipping fee or a damaged item?", 'received agent');
+                } else {
+                    appendMessage("Of course! Please let me know what's on your mind, and I'll do my best to assist you right away.", 'received agent');
+                }
+            }, 1500);
+        }, 500);
+    }
+
+    function showRatingSystem() {
+        if (document.getElementById('ratingBox')) return;
+        
+        const ratingHtml = `
+            <div class="msg received" id="ratingBox">
+                <div class="rating-container">
+                    <div style="font-size: 13px;">How was your experience with ${agentName}?</div>
+                    <div class="star-rating">
+                        <i class="far fa-star" onclick="submitRating(1)"></i>
+                        <i class="far fa-star" onclick="submitRating(2)"></i>
+                        <i class="far fa-star" onclick="submitRating(3)"></i>
+                        <i class="far fa-star" onclick="submitRating(4)"></i>
+                        <i class="far fa-star" onclick="submitRating(5)"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('beforeend', ratingHtml);
+        scrollToBottom(true);
+    }
+
+    function submitRating(stars) {
+        const box = document.getElementById('ratingBox');
+        box.innerHTML = `<div class="rating-container" style="color: var(--accent)">Thank you for the ${stars}-star rating! Have a great day!</div>`;
+        setTimeout(() => { box.style.opacity = '0.5'; }, 2000);
+    }
+</script>
+</body>
+</html>
