@@ -39,7 +39,7 @@
             max-width: 1200px;
             height: 95vh;
             display: grid;
-            grid-template-columns: 350px 1fr; /* Removed Analytics Column */
+            grid-template-columns: 350px 1fr;
             background: var(--bg-main);
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.05);
@@ -47,7 +47,6 @@
             overflow: hidden;
         }
 
-        /* Sidebar - Chat List */
         .sidebar {
             background: var(--bg-side);
             border-right: 1px solid rgba(255,255,255,0.1);
@@ -66,8 +65,6 @@
 
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #4f5e67; display: flex; align-items: center; justify-content: center; }
 
-        /* Search Bar Removed */
-
         .chat-list { overflow-y: auto; flex: 1; }
         .chat-item {
             padding: 12px 16px;
@@ -84,7 +81,7 @@
         .chat-info .time { font-size: 12px; color: var(--text-secondary); }
         .chat-info .last-msg { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* Main Chat Area */
+        /* --- FIXED LAYOUT FOR CHAT --- */
         .main-chat {
             display: flex;
             flex-direction: column;
@@ -94,6 +91,7 @@
             height: 100%; 
             overflow: hidden; 
             position: relative;
+            min-height: 0; /* Ensures container doesn't overflow parent */
         }
 
         .chat-header {
@@ -186,7 +184,6 @@
 
         .action-chip:hover { background: var(--accent); color: white; }
 
-        /* Input Area */
         .input-area {
             background: var(--panel-header);
             padding: 10px 16px;
@@ -252,7 +249,6 @@
 
         .hidden { display: none !important; }
 
-        /* --- MOBILE RESPONSIVENESS --- */
         @media (max-width: 768px) {
             .app-container { grid-template-columns: 1fr; height: 100vh; border-radius: 0; }
             .sidebar {
@@ -302,7 +298,7 @@
                         <span class="name">ShipAssist AI </span>
                         <span class="time" id="lastMsgTime">Just now</span>
                     </div>
-                    <div class="last-msg" id="sidebarPreview">👋 Welcome to ShipAssist AI Support...</div>
+                    <div class="last-msg" id="sidebarPreview">👋 Welcome to ShipAssist AI...</div>
                 </div>
             </div>
         </div>
@@ -313,7 +309,7 @@
             <div class="profile-pic" style="background: #00a884; cursor:pointer" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
             <div style="flex:1">
                 <div style="display: flex; align-items: center;">
-                    <span style="font-weight: 500;">ShipAssist AI  Support</span>
+                    <span style="font-weight: 500;">ShipAssist AI Support</span>
                     <span id="modeBadge" class="mode-badge mode-ai">AI ACTIVE</span>
                 </div>
                 <div id="connectionStatus" style="font-size: 12px; color: var(--text-secondary);">online</div>
@@ -367,7 +363,7 @@
     const quickActions = document.getElementById('quickActions');
 
     const agentName = "Sarah";
-    const contactNumber = "0557265120"; // Your number
+    const contactNumber = "0557265120";
 
     const db = {
         "SPX123456": { status: "Arrived at Station", loc: "Madina Branch, Ghana", eta: "Ready for Pickup", note: "Please come with your ID for **Self Pick-up**." },
@@ -489,7 +485,9 @@
         setTimeout(() => {
             const waDiv = document.createElement('div');
             waDiv.className = "quick-actions";
-            waDiv.innerHTML = `<a href="https://wa.me/233${contactNumber.substring(1)}" class="action-chip" target="_blank" style="background: #25d366; color: white; border: none;"><i class="fab fa-whatsapp"></i> Chat with an Agent</a>`;
+            // FIXED WHATSAPP LINK WITH PRE-FILLED MESSAGE
+            const encodedMsg = encodeURIComponent("I need help and I want to speak to an agent.");
+            waDiv.innerHTML = `<a href="https://wa.me/233${contactNumber.substring(1)}?text=${encodedMsg}" class="action-chip" target="_blank" style="background: #25d366; color: white; border: none;"><i class="fab fa-whatsapp"></i> Chat with an Agent</a>`;
             chatContainer.appendChild(waDiv);
             scrollToBottom(true);
         }, 1000);
