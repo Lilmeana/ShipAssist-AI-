@@ -24,26 +24,30 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
+        /* --- ADDITION: LOCK BODY SCROLLING --- */
         body {
             background-color: #0c1317;
             height: 100vh;
+            height: -webkit-fill-available;
             display: flex;
             justify-content: center;
             align-items: center;
             color: var(--text-primary);
-            overflow: hidden;
+            overflow: hidden; /* Prevent the whole page from scrolling */
+            position: fixed; /* Extra insurance for mobile browsers */
+            width: 100%;
         }
+        /* --- END ADDITION --- */
 
         .app-container {
             width: 100%;
             max-width: 1600px;
-            height: 95vh;
+            height: 100vh; /* Changed from 95vh to fill screen like ChatGPT */
             display: grid;
             grid-template-columns: 350px 1fr 300px;
             background: var(--bg-main);
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
             overflow: hidden;
         }
 
@@ -53,6 +57,7 @@
             border-right: 1px solid rgba(255,255,255,0.1);
             display: flex;
             flex-direction: column;
+            height: 100%;
         }
 
         .header-ui {
@@ -62,6 +67,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-shrink: 0;
         }
 
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #4f5e67; display: flex; align-items: center; justify-content: center; }
@@ -69,6 +75,7 @@
         .search-container {
             padding: 8px 12px;
             background: var(--bg-side);
+            flex-shrink: 0;
         }
 
         .search-bar {
@@ -106,6 +113,7 @@
         .chat-info .last-msg { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 
         /* Main Chat Area */
+        /* --- ADDITION: WHATSAPP/CHATGPT FLEX LAYOUT --- */
         .main-chat {
             display: flex;
             flex-direction: column;
@@ -113,8 +121,10 @@
             background-blend-mode: overlay;
             background-color: var(--bg-chat);
             height: 100%; 
-            overflow: hidden; 
+            position: relative;
+            overflow: hidden; /* Important: chat container itself handles children */
         }
+        /* --- END ADDITION --- */
 
         .chat-header {
             height: 60px;
@@ -124,20 +134,23 @@
             align-items: center;
             gap: 15px;
             z-index: 10;
-            flex-shrink: 0;
+            flex-shrink: 0; /* Header never shrinks */
         }
 
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 
+        /* --- ADDITION: CORE SCROLL FIX --- */
         .messages-container {
-            flex: 1;
+            flex: 1; /* This takes up all available space between header and input */
             padding: 20px 5%;
-            overflow-y: auto;
+            overflow-y: auto; /* Enable scrolling only here */
             display: flex;
             flex-direction: column;
             gap: 4px;
             scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch; /* Smooth mobile momentum */
         }
+        /* --- END ADDITION --- */
 
         .msg {
             max-width: 75%;
@@ -244,7 +257,7 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            flex-shrink: 0;
+            flex-shrink: 0; /* Input area never shrinks */
         }
 
         .input-wrapper {
@@ -272,12 +285,11 @@
         .action-btn:hover { color: var(--text-primary); }
 
         /* Dashboard Panel */
+        /* --- ADDITION: HIDE ANALYTICS AS REQUESTED --- */
         .dashboard {
-            background: var(--bg-side);
-            border-left: 1px solid rgba(255,255,255,0.1);
-            padding: 20px;
-            overflow-y: auto;
+            display: none !important; /* Conceal metrics per requirements */
         }
+        /* --- END ADDITION --- */
 
         .stat-card {
             background: var(--panel-header);
@@ -313,7 +325,7 @@
         #scrollBtn {
             position: absolute;
             bottom: 80px;
-            right: 320px;
+            right: 20px; /* Adjusted since dashboard is hidden */
             background: var(--panel-header);
             color: var(--accent);
             width: 40px;
@@ -342,25 +354,17 @@
 
         .hidden { display: none !important; }
 
-        /* --- ADDITION: MOBILE RESPONSIVENESS START --- */
+        /* --- MOBILE RESPONSIVENESS RE-OPTIMIZED --- */
         @media (max-width: 1024px) {
             .app-container {
                 grid-template-columns: 280px 1fr;
             }
-            .dashboard { display: none; }
-            #scrollBtn { right: 20px; }
         }
 
         @media (max-width: 768px) {
-            body { 
-                align-items: stretch; 
-                overflow: hidden; /* Prevent body bounce on iOS */
-            }
             .app-container {
-                height: 100vh;
-                height: -webkit-fill-available; /* Fill mobile viewports accurately */
                 grid-template-columns: 1fr;
-                border-radius: 0;
+                height: 100vh;
             }
             .sidebar {
                 position: fixed;
@@ -369,78 +373,16 @@
                 width: 85%;
                 height: 100%;
                 z-index: 1000;
-                transition: 0.3s ease;
             }
-            .sidebar.active { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .sidebar.active { left: 0; }
             
-            /* Enhanced Mobile Chat UI */
-            .main-chat {
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                position: relative;
-            }
+            .msg { max-width: 88%; }
 
-            .messages-container {
-                padding: 15px 12px;
-                flex: 1;
-                margin-bottom: 0;
-            }
-
-            .msg { 
-                max-width: 88%; 
-                font-size: 14px;
-                padding: 8px 12px;
-            }
-
-            /* Fixed Mobile Input Bar */
+            /* Ensure input stays above keyboard */
             .input-area {
-                padding: 12px;
-                background: var(--panel-header);
-                border-top: 1px solid rgba(255,255,255,0.05);
-                position: relative; /* Ensure it stays in the flow but flex container holds it */
-                padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* Support for home bars */
-            }
-
-            .input-wrapper {
-                padding: 10px 14px;
-            }
-
-            .quick-actions { 
-                padding: 8px; 
-                gap: 6px;
-            }
-
-            .action-chip { 
-                font-size: 11px; 
-                padding: 5px 10px;
-            }
-
-            .mobile-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 999;
-            }
-            .mobile-overlay.active { display: block; }
-            
-            #scrollBtn {
-                right: 15px;
-                bottom: 85px;
+                padding-bottom: max(12px, env(safe-area-inset-bottom));
             }
         }
-
-        @media (max-width: 480px) {
-            .msg { max-width: 92%; }
-            .chat-header { padding: 8px 12px; }
-            .action-btn { font-size: 18px; }
-            .input-wrapper input { font-size: 14px; }
-        }
-        /* --- ADDITION: MOBILE RESPONSIVENESS END --- */
     </style>
 </head>
 <body>
@@ -503,7 +445,7 @@
             </div>
         </div>
 
-        <div id="bottomStickyWrapper">
+        <div id="bottomStickyWrapper" style="flex-shrink: 0; background: var(--bg-chat); z-index: 10;">
             <div class="quick-actions" id="quickActions">
                 <div class="action-chip" onclick="handleQuickAction('Track Package')">📦 Track Package</div>
                 <div class="action-chip" onclick="handleQuickAction('Delivery Issue')">⚠️ Delivery Issue</div>
@@ -520,7 +462,6 @@
                 <i class="fas fa-paper-plane action-btn" id="sendBtn" style="font-size: 18px; color: var(--accent);"></i>
             </div>
         </div>
-        
         <div id="scrollBtn" onclick="scrollToBottom()"><i class="fas fa-chevron-down"></i></div>
     </div>
 
@@ -551,7 +492,6 @@
 </div>
 
 <script>
-    // --- 1. CONFIGURATION & DATABASE ---
     const chatContainer = document.getElementById('chatContainer');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -590,7 +530,6 @@
         }
     };
 
-    // --- 2. SYSTEM STATE ---
     let state = {
         isHumanMode: false,
         agentIntroduced: false, 
@@ -605,7 +544,6 @@
         }
     };
 
-    // --- 3. INTENT DETECTION ENGINE ---
     const INTENTS = {
         TRACKING: /(track|where|status|check|trak|parc|pacel|pakage|order|shpmnt|find)/i,
         MISSING: /(not receive|didn't get|no get|missing|never came|no show|stolen|lost|havent seen)/i,
@@ -619,11 +557,11 @@
         PIDGIN: /\b(no get|dey)\b/i
     };
 
-    // --- 4. CORE FUNCTIONS ---
+    window.onload = () => {
+        userInput.focus();
+        scrollToBottom(true);
+    };
 
-    window.onload = () => userInput.focus();
-
-    // --- ADDITION: Mobile Toggle Handler ---
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('mobileOverlay');
@@ -631,7 +569,6 @@
         overlay.classList.toggle('active');
     }
 
-    /* --- ADDITION: AUTO-SCROLL ON FOCUS --- */
     userInput.addEventListener('focus', () => {
         setTimeout(() => scrollToBottom(true), 300);
     });
@@ -692,7 +629,6 @@
         }
     }
 
-    // --- 5. AI BRAIN ---
     function generateAIResponse(input) {
         const query = input.toLowerCase();
         
@@ -827,19 +763,16 @@
     }
 
     function updateStats() {
-        statTotal.innerText = state.totalMsgs;
-        statAI.innerText = state.aiMsgs;
-        statEscalated.innerText = state.escalatedCount;
+        if(statTotal) statTotal.innerText = state.totalMsgs;
+        if(statAI) statAI.innerText = state.aiMsgs;
+        if(statEscalated) statEscalated.innerText = state.escalatedCount;
     }
 
+    /* --- ADDITION: AUTO-SCROLL ENHANCEMENT --- */
     function scrollToBottom(force = false) {
-        const threshold = 150; 
-        const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < threshold;
-        
-        if (force || isNearBottom) {
-            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-        }
+        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: force ? 'auto' : 'smooth' });
     }
+    /* --- END ADDITION --- */
 
     chatContainer.onscroll = () => {
         scrollBtn.style.display = (chatContainer.scrollTop < (chatContainer.scrollHeight - chatContainer.offsetHeight - 100)) ? "flex" : "none";
